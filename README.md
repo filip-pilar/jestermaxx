@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# jestermaxx ai
 
-## Getting Started
+your text has a recessed mandible and prey eyes. we fix that.
 
-First, run the development server:
+jestermaxx ai translates your mid normie copy into chronically online looksmax speak — or generates it from scratch. every sentence gets mogged into ascension. the forward growth on the output is genuinely elite.
+
+## how it works
+
+1. pick your mode: **jestermaxx [my copy]** or **jestermaxx [my idea]**
+2. paste your text or describe what you need written
+3. get brutalmogged by the output
+
+that's it. zero bloat. compact midface architecture on the UX. just submit bro.
+
+## stack
+
+- **next.js** — framemogging every other react framework
+- **ai sdk** — streaming with hunter eyes precision
+- **tailwind + shadcn** — softmaxxed UI, clean gonial angle on every component
+- **geist mono** — the only font with positive canthal tilt
+
+## run locally
+
+```bash
+git clone <repo>
+cd jestermaxx
+npm install
+```
+
+add a `.env.local`:
+
+```
+DEFAULT_MODEL=your-model-here
+```
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+open [localhost:3000](http://localhost:3000). ascension begins.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## prompts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+system prompts live in `lib/translate.md` and `lib/generate.md`. edit them directly — changes take effect on restart. the vocabulary system is a generative grammar, not a word list. every suffix is productive. invent relentlessly.
 
-## Learn More
+## it's over for
 
-To learn more about Next.js, take a look at the following resources:
+- boring text
+- normie copy
+- mid captions
+- bluepilled emails
+- recessed DMs
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+mog or be mogged.

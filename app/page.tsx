@@ -1,65 +1,156 @@
+"use client";
+
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Copy, Check } from "lucide-react";
 import Image from "next/image";
 
+type Mode = "translate" | "generate";
+
+const LOADING_MESSAGES = [
+  "jestermaxxing...",
+];
+
 export default function Home() {
+  const [mode, setMode] = useState<Mode>("translate");
+  const [input, setInput] = useState("");
+  const [output, setOutput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0]);
+  const abortRef = useRef<AbortController | null>(null);
+  const loadingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (isLoading) {
+      let i = 0;
+      setLoadingMsg(LOADING_MESSAGES[0]);
+      loadingRef.current = setInterval(() => {
+        i = (i + 1) % LOADING_MESSAGES.length;
+        setLoadingMsg(LOADING_MESSAGES[i]);
+      }, 2500);
+    } else if (loadingRef.current) {
+      clearInterval(loadingRef.current);
+      loadingRef.current = null;
+    }
+    return () => {
+      if (loadingRef.current) clearInterval(loadingRef.current);
+    };
+  }, [isLoading]);
+
+  const handleSubmit = useCallback(async () => {
+    if (!input.trim() || isLoading) return;
+
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+
+    setOutput("");
+    setIsLoading(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: input, mode }),
+        signal: ctrl.signal,
+      });
+      if (!res.ok || !res.body) throw new Error("fail");
+
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        setOutput((p) => p + dec.decode(value, { stream: true }));
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      setOutput("something went wrong. try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [input, mode, isLoading]);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(output);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+    <div className="min-h-svh flex items-start justify-center px-4 sm:px-5 pt-[6vh] sm:pt-[12vh] pb-10">
+      <div className="w-full max-w-lg">
         <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
+          src="/clav/jester-hero.png"
+          alt="jesterGPT"
+          width={320}
+          height={320}
+          className="mx-auto mb-4 w-48 h-48 sm:w-80 sm:h-80"
+          style={{ objectFit: "contain" }}
+          unoptimized
           priority
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        {/* Title + mode toggle as one element */}
+        <button
+          onClick={() => setMode(mode === "translate" ? "generate" : "translate")}
+          className="block mx-auto mb-8 font-mono text-2xl sm:text-3xl font-black cursor-pointer whitespace-nowrap tracking-tight text-center"
+        >
+          jestermaxx [{mode === "translate" ? "my copy" : "my idea"} ⇄]
+        </button>
+
+        {/* Input */}
+        <Textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+              e.preventDefault();
+              handleSubmit();
+            }
+          }}
+          placeholder={
+            mode === "translate"
+              ? "paste your text here..."
+              : "describe your idea..."
+          }
+          rows={5}
+          className="resize-none bg-card text-sm"
+        />
+
+        {/* Submit */}
+        <Button
+          onClick={handleSubmit}
+          disabled={isLoading || !input.trim()}
+          className="w-full mt-3 font-mono text-sm tracking-wide cursor-pointer"
+        >
+          {isLoading ? loadingMsg : "submit"}
+        </Button>
+
+        {/* Loading state — before any text streams in */}
+        {isLoading && !output && (
+          <div className="mt-6 p-4 bg-card border border-border text-sm text-muted-foreground font-mono text-center">
+            {loadingMsg}
+          </div>
+        )}
+
+        {/* Output */}
+        {output && (
+          <div className="mt-6 p-4 bg-card border border-border text-sm leading-relaxed relative">
+            {output}
+            {isLoading && <span className="typing-cursor" />}
+            {!isLoading && (
+              <button
+                onClick={handleCopy}
+                className="absolute top-3 right-3 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+              >
+                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
