@@ -109,7 +109,7 @@ export default function Home() {
         {/* Submit */}
         <Button
           onClick={handleSubmit}
-          disabled={!input.trim()}
+          disabled={!input.trim() || isLoading}
           className="w-full mt-3 font-mono text-sm tracking-wide cursor-pointer"
         >
           {isLoading ? "jestermaxxing..." : "submit"}
