@@ -13,6 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_URL ?? "https://jestermaxx.vercel.app"
+  ),
   title: "jestermaxx ai",
   description: "Translate anything into chronically online looksmax speak.",
   twitter: {

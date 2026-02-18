@@ -35,7 +35,7 @@ export default async function Image() {
           padding: "0px 80px 0px 80px",
         }}
       >
-        <img src={heroSrc} width="520" height="520" style={{ objectFit: "contain", marginLeft: "-30px" }} />
+        <img alt="" src={heroSrc} width="520" height="520" style={{ objectFit: "contain", marginLeft: "-30px" }} />
         <div
           style={{
             display: "flex",
