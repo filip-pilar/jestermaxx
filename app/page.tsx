@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Copy, Check } from "lucide-react";
@@ -8,43 +8,25 @@ import Image from "next/image";
 
 type Mode = "translate" | "generate";
 
-const LOADING_MESSAGES = [
-  "jestermaxxing...",
-];
-
 export default function Home() {
   const [mode, setMode] = useState<Mode>("translate");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0]);
   const abortRef = useRef<AbortController | null>(null);
-  const loadingRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (isLoading) {
-      let i = 0;
-      setLoadingMsg(LOADING_MESSAGES[0]);
-      loadingRef.current = setInterval(() => {
-        i = (i + 1) % LOADING_MESSAGES.length;
-        setLoadingMsg(LOADING_MESSAGES[i]);
-      }, 2500);
-    } else if (loadingRef.current) {
-      clearInterval(loadingRef.current);
-      loadingRef.current = null;
-    }
-    return () => {
-      if (loadingRef.current) clearInterval(loadingRef.current);
-    };
-  }, [isLoading]);
+  const requestIdRef = useRef(0);
 
   const handleSubmit = useCallback(async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim()) return;
 
+    // Abort any in-flight request
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
+
+    // Track which request this is so stale finally blocks don't clobber state
+    const id = ++requestIdRef.current;
 
     setOutput("");
     setIsLoading(true);
@@ -67,11 +49,16 @@ export default function Home() {
       }
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") return;
-      setOutput("something went wrong. try again.");
+      if (id === requestIdRef.current) {
+        setOutput("something went wrong. try again.");
+      }
     } finally {
-      setIsLoading(false);
+      // Only clear loading if this is still the active request
+      if (id === requestIdRef.current) {
+        setIsLoading(false);
+      }
     }
-  }, [input, mode, isLoading]);
+  }, [input, mode]);
 
   function handleCopy() {
     navigator.clipboard.writeText(output);
@@ -122,22 +109,15 @@ export default function Home() {
         {/* Submit */}
         <Button
           onClick={handleSubmit}
-          disabled={isLoading || !input.trim()}
+          disabled={!input.trim()}
           className="w-full mt-3 font-mono text-sm tracking-wide cursor-pointer"
         >
-          {isLoading ? loadingMsg : "submit"}
+          {isLoading ? "jestermaxxing..." : "submit"}
         </Button>
-
-        {/* Loading state — before any text streams in */}
-        {isLoading && !output && (
-          <div className="mt-6 p-4 bg-card border border-border text-sm text-muted-foreground font-mono text-center">
-            {loadingMsg}
-          </div>
-        )}
 
         {/* Output */}
         {output && (
-          <div className="mt-6 p-4 bg-card border border-border text-sm leading-relaxed relative">
+          <div className="mt-6 p-4 bg-card border border-border text-sm leading-relaxed relative whitespace-pre-wrap">
             {output}
             {isLoading && <span className="typing-cursor" />}
             {!isLoading && (
